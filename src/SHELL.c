@@ -1,6 +1,6 @@
 
-//#include "fileSystem.h"
-#include "test.h"
+#include "fileSystem.h"
+//#include "test.h"
 
 void openFile() {
 	FILE* fp;
@@ -64,6 +64,8 @@ int main()
 			dir(cur);
 			goto com;
 		}
+		else if (strcmp(command, "delete") == 0)
+			delete(commandFor,cur);
 		else if (strcmp(command, "md") == 0)
 			md(cur, commandFor);
 		else if (strcmp(command, "mkdir") == 0)
@@ -80,6 +82,10 @@ int main()
 			attrib(commandFor, cur);
 		else if (strcmp(command, "copy") == 0)
 			copy(cur,commandFor);
+		else if (strcmp(command, "rm") == 0)
+			rm(commandFor,cur);
+		else if (strcmp(command, "rmdir") == 0)
+			rmdir(commandFor, cur);
 		else
 			printf("查找不到该命令\n\n");
 	com: {

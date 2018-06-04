@@ -5,12 +5,17 @@ FCBList md(FCBList cur, char *a)
 	int i = 0;
 	for (i; i<400; ++i)
 		if (content[i]->fMode == 3) {
-			content[i]->iden = 0;
-			content[i]->fMode = 2;
-			content[i]->father = cur->adr;
-			strcpy(content[i]->fileId, a);
 			for (int k = 0; k < childSize; ++k) {
+				if (cur->childs[k] >= 0 && strcmp(content[cur->childs[k]]->fileId, a) == 0 && content[cur->childs[k]]->iden == 0) {
+					printf("该名字已存在！\n");
+					return NULL;
+				}
 				if (cur->childs[k]<0) {
+					content[i]->iden = 0;
+					content[i]->fMode = 2;
+					content[i]->father = cur->adr;
+					content[i]->adr = i;
+					strcpy(content[i]->fileId, a);
 					cur->childs[k] = i;
 					break;
 				}
@@ -25,13 +30,19 @@ FCBList mkdir(FCBList cur, char *a)
 	int i = 0;
 	for (i; i<400; ++i)
 		if (content[i]->fMode == 3) {
-			content[i]->iden = 1;
-			content[i]->fMode = 2;
-			content[i]->father = cur->adr;
-			strcpy(content[i]->fileId, a);
+			
 			for (int k = 0; k < childSize; ++k) {
+				if (cur->childs[k] >= 0 && strcmp(content[cur->childs[k]]->fileId, a) == 0 && content[cur->childs[k]]->iden == 1) {
+					printf("该名字已存在！\n");
+					return NULL;
+				}
 				if (cur->childs[k] < 0) {
 					cur->childs[k] = i;
+					content[i]->iden = 1;
+					content[i]->fMode = 2;
+					content[i]->father = cur->adr;
+					content[i]->adr = i;
+					strcpy(content[i]->fileId, a);
 					break;
 				}
 			}
@@ -120,6 +131,8 @@ void copy(FCBList cur, char *a)
 	while(strcmp(result[ii],"")==0)
 	strcpy(a, result[ii]);
 	des = md(des, a);
+	if (des == NULL)
+		goto fail;
 	for (int i = 0,j = 0; i < childSize; ++i) {
 		if (source->childs[i] >= 0) {
 			int q = findFATEmpty();
@@ -146,6 +159,10 @@ void dir(FCBList cur)
 				printf("<FIFL>\n");
 		}
 	}
+}
+
+void delete(char* a, FCBList cur){
+	rm(a, cur);
 }
 
 void edit(char *a, FCBList cur)
@@ -304,6 +321,82 @@ fail: {
 	}
 success: {
 }
+}
+
+void rm(char *a, FCBList cur)
+{
+	int adressOfCurInFathe;
+	for (int i = 0; i < childSize; ++i) {
+		if (cur->childs[i] >= 0&&strcmp(a,content[cur->childs[i]]->fileId)==0&& content[cur->childs[i]]->iden == 0){
+			for (int j = 0; j < childSize; ++j) {
+				if (content[cur->childs[i]]->childs[j] >= 0)
+					strcpy(FAT[content[cur->childs[i]]->childs[j]].contain,'\0');
+			}
+			content[cur->childs[i]] = (FCBList)malloc(sizeof(FCB));
+			content[cur->childs[i]]->fMode = 3;
+			cur->childs[i] = -1;
+			goto success;
+		}
+	}
+	printf("\n找不到指定文件\n");
+success:{}
+}
+
+void rmdir(char *a, FCBList cur)
+{
+	int adressOfCurInFathe;
+	if (strstr(a, "/") != NULL) {
+		split(a, "/");
+		cur = content[0];
+		for (int i = 0; i < childSize && strcmp(result[i], "") != 0; ++i) {
+			FCBList t = findPath(result[i], cur);
+			if (t != NULL)
+				cur = t;
+			else
+				goto fail;
+		}
+	}
+	else {
+		for (int i = 0; i < childSize; ++i) {
+			if (cur->childs[i] >= 0 && strcmp(a, content[cur->childs[i]]->fileId) == 0) {
+				cur = content[cur->childs[i]];
+				adressOfCurInFathe = i;
+				break;
+			}
+		}
+	}
+	if (strstr(a, "/s") == NULL) {
+		for (int i = 0; i < childSize; ++i) {
+			if (cur->childs[i] >= 0) {
+
+				if (content[cur->childs[i]]->iden == 0) {
+					printf("是否确认删除y/n?\t%s", content[cur->childs[i]]->fileId);
+					char confirm = getchar();
+					if (confirm == "y")
+						rm(content[cur->childs[i]]->fileId, cur);
+				}
+				else {
+					rmdir(content[cur->childs[i]]->fileId, cur);
+				}
+			}
+		}
+	}
+		if (cur->fMode != 3) {
+			printf("是否确认删除y/n?\t%s\t", cur->fileId);
+			char confirm[2];
+			gets(confirm);
+			if (strcmp(confirm,"y")==0) {
+				content[cur->father]->childs[adressOfCurInFathe] = -1;
+				content[cur->adr] = (FCBList)malloc(sizeof(FCB));
+				content[cur->adr]->fMode = 3;
+				goto success;
+			}
+		}
+
+	fail: {
+		printf("\n找不到指定文件\n");
+		}
+	  success: {}
 }
 
 char* split(char *str, char *s)

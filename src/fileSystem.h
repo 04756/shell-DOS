@@ -68,10 +68,13 @@ FCBList mkdir(FCBList cur, char*);
 FCBList cd(FCBList cur, char *);
 void copy(FCBList cur, char *a);
 void dir(FCBList cur);
+void delete(char*, FCBList cur);
 void edit(char*, FCBList cur);
 void type(char*, FCBList cur);
 void find(char*);
 void attrib(char*, FCBList cur);
+void rm(char*, FCBList cur);
+void rmdir(char *a, FCBList cur);
 
 
 char* split(char *str, char *s);
