@@ -1,6 +1,6 @@
 #include "fileSystem.h"
 
-void md(FCBList cur, char *a)
+FCBList md(FCBList cur, char *a)
 {
 	int i = 0;
 	for (i; i<400; ++i)
@@ -17,9 +17,10 @@ void md(FCBList cur, char *a)
 			}
 			break;
 		}
+	return content[i];
 }
 
-void mkdir(FCBList cur, char *a)
+FCBList mkdir(FCBList cur, char *a)
 {
 	int i = 0;
 	for (i; i<400; ++i)
@@ -36,6 +37,7 @@ void mkdir(FCBList cur, char *a)
 			}
 			break;
 		}
+	return content[i];
 }
 
 FCBList cd(FCBList cur, char *a)
@@ -89,6 +91,46 @@ fail: {
 	  for (int i = 0; i < childSize; ++i)
 		  memset(result[i],'\0', childSize * sizeof(char));
 	  return cur;
+}
+
+void copy(FCBList cur, char *a)
+{
+	char b[50];
+	splitCommand(a);
+	strcpy(a, result[0]);
+	strcpy(b, result[1]);
+	FCBList source = findPrePath(a);
+	for (int i = 0; i < childSize; ++i) {
+		if (source->childs[i] >= 0 && content[source->childs[i]]->iden == 0 && strcmp(content[source->childs[i]]->fileId, a) == 0){
+			source = content[source->childs[i]];
+			break;
+		}
+	}
+	split(b, "/");
+	FCBList des = content[0];
+	for (int i = 0; i < childSize && strcmp(result[i], "") != 0; ++i) {
+		FCBList t = des;
+		if ((t = findPath(result[i], des)) == NULL)
+			goto fail;
+		else
+			des = t;
+	}
+	split(a, "/");
+	int ii = 0;
+	while(strcmp(result[ii],"")==0)
+	strcpy(a, result[ii]);
+	des = md(des, a);
+	for (int i = 0,j = 0; i < childSize; ++i) {
+		if (source->childs[i] >= 0) {
+			int q = findFATEmpty();
+			des->childs[j] = q;
+			strcpy(FAT[q].contain,FAT[source->childs[i]].contain);
+			++j;
+		}
+	}
+fail:{
+	printf("\n找不到指定路径\n");
+}
 }
 
 void dir(FCBList cur)
@@ -167,23 +209,29 @@ void find(char *a)
 	splitCommand(a);
 	char searchStr[500];
 	char path[500];
-	strcpy(searchStr, result[0]);
-	strcpy(path, result[1]);
-	for (int i = 0; i < childSize; ++i)
+	strcpy(searchStr, result[0]);//保存文件名
+	strcpy(path, result[1]);//保存路径
+	for (int i = 0; i < childSize; ++i)//初始化result数组
 		memset(result[i], '\0', childSize * sizeof(char));
-	if(strstr(path, "/")!=NULL)
+	if(strstr(path, "/")!=NULL)//如果在当前路径寻找文件，则不分割路径
 	split(path,"/");
 	FCBList temp = content[0];
 	printf("\n--------------%s\n\n", path);
 	int i;
-	for (i = 0; i < childSize && strcmp(result[i+1], "") != 0 && temp != NULL; ++i) {
-		temp = findPath(result[i], temp);
+	//切换到相应路径
+	FCBList t = temp;
+	for (i = 0; i < childSize && strcmp(result[i+1], "") != 0; ++i) {
+		if ((t = findPath(result[i], temp)) != NULL)
+			temp = t;
 	}
+	//把文件名复制到path变量
 	if (strcmp("",result[i])!=0)
 		strcpy(path, result[i]);
+	//指定的文件
 	for (int q = 0; q < childSize; ++q) {
 		if (temp->childs[q] >= 0 && content[temp->childs[q]]->iden == 0 && strcmp(content[temp->childs[q]]->fileId, path) == 0) {
 			temp = content[temp->childs[q]];
+			break;
 		}
 	}
 	for (int q = 0; q < childSize;++q) {
@@ -260,12 +308,14 @@ success: {
 
 char* split(char *str, char *s)
 {
+	for (int i = 0; i < childSize; ++i)//初始化result数组
+		memset(result[i], '\0', childSize * sizeof(char));
 	char* adr = strstr(str, s);
 	//char result[10][10];
 	int k = 0;
 	int q = 0;
 	++adr;
-	char tt[10];
+	char tt[50];
 	for (char i = *adr;;i = *(++adr), ++q) {
 
 		if (i == '/'||i=='\0') {
@@ -285,10 +335,12 @@ char* split(char *str, char *s)
 
 char * splitCommand(char * str)
 {
+	for (int i = 0; i < childSize; ++i)//初始化result数组
+		memset(result[i], '\0', childSize * sizeof(char));
 	char* adr = str;
 	int k = 0;
 	int q = 0;
-	char tt[10];
+	char tt[50];
 	for (char i = *adr;; i = *(++adr), ++q) {
 
 		if (i == ' ' || i == '\0') {
@@ -321,6 +373,48 @@ FCBList findPath(char *a, FCBList start)
 		findPath(a, content[temp->childs[i]]);
 	}
 	return NULL;
+}
+
+FCBList findPrePath(char * a)
+{
+	char path[500];
+	for (int i = 0; i < childSize; ++i)//初始化result数组
+		memset(result[i], '\0', childSize * sizeof(char));
+	strcpy(path, a);
+	if (strstr(path, "/") != NULL)//如果在当前路径寻找文件，则不分割路径
+	{
+		split(path, "/");
+	}
+	else
+		return NULL;
+
+	FCBList temp = content[0];
+	int i;
+	//切换到相应路径
+	FCBList t = temp;
+	for (i = 0; i < childSize && strcmp(result[i + 1], "") != 0; ++i) {
+		if ((t = findPath(result[i], temp)) != NULL)
+			temp = t;
+	}
+	//把文件名复制到path变量
+	if (strcmp("", result[i]) != 0)
+		strcpy(path, result[i]);
+	//指定的文件
+	for (int q = 0; q < childSize; ++q) {
+		if (temp->childs[q] >= 0 && content[temp->childs[q]]->iden == 0 && strcmp(content[temp->childs[q]]->fileId, path) == 0) {
+			temp = content[temp->childs[q]];
+			a = path;
+			return temp;
+		}
+	}
+}
+
+int findFATEmpty()
+{
+	for (int i = 0; i < 512; ++i) {
+		if (strcmp(FAT[i].contain, "") == 0)
+			return i;
+	}
 }
 
 char * subString(char * des, char * source, int start, int count)

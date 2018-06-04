@@ -1,4 +1,6 @@
-#include "fileSystem.h"
+
+//#include "fileSystem.h"
+#include "test.h"
 
 void openFile() {
 	FILE* fp;
@@ -53,7 +55,7 @@ int main()
 	printf("%s>", cur->fileId);
 	scanf("%s", command);
 	while (strcmp(command, "exit") != 0) {
-		char commandFor[20];
+		char commandFor[50];
 		//getline(commandFor, 20);
 		//scanf("%s", commandFor);
 		getchar();
@@ -76,6 +78,8 @@ int main()
 			type(commandFor, cur);
 		else if (strcmp(command, "attrib") == 0)
 			attrib(commandFor, cur);
+		else if (strcmp(command, "copy") == 0)
+			copy(cur,commandFor);
 		else
 			printf("查找不到该命令\n\n");
 	com: {

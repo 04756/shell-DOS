@@ -61,11 +61,12 @@ typedef struct {
 super_block SUPER;
 FCBList content[400];
 Block FAT[512];//数据块，用于存放文件信息。
-char result[10][10];
+char result[childSize][50];
 
-void md(FCBList cur,char*);
-void mkdir(FCBList cur, char*);
+FCBList md(FCBList cur,char*);
+FCBList mkdir(FCBList cur, char*);
 FCBList cd(FCBList cur, char *);
+void copy(FCBList cur, char *a);
 void dir(FCBList cur);
 void edit(char*, FCBList cur);
 void type(char*, FCBList cur);
@@ -76,4 +77,6 @@ void attrib(char*, FCBList cur);
 char* split(char *str, char *s);
 char* splitCommand(char *str);
 FCBList findPath(char *a, FCBList start);
+FCBList findPrePath(char*);
+int findFATEmpty();
 char* subString(char * des, char* source, int start, int count);
