@@ -2,29 +2,6 @@
 #include "fileSystem.h"
 //#include "test.h"
 
-void openFile() {
-	FILE* fp;
-	FILE* test;
-	fopen_s(&test, "shell.txt", "r");
-	
-	if(test == NULL){
-		fopen_s(&fp, "shell.txt", "w");
-		for (int i = sizeof(0x00); i <= 1048576; ++i)
-			putc(0x00, fp);
-		fseek(fp, 0, 0);
-		fclose(fp);
-	}
-	fclose(test);
-
-	for (int i = 0; i < 400; ++i) {
-		content[i] = (FCBList)malloc(sizeof(FCB));
-		content[i]->fMode = 3;
-		memset(content[i]->childs, -1, sizeof(int)*childSize);
-	}
-	for (int i = 0; i < 512; ++i)
-		memset(FAT[i].contain ,'\0',sizeof(char)*1024);
-}
-
 int getline(char *s, int lim) {
 	int i;
 	i = 0;
@@ -37,20 +14,12 @@ int getline(char *s, int lim) {
 
 int main()
 {
-	openFile();
-	
-	//root的初始化
-	FCBList root = (FCBList)malloc(sizeof(FCB));
-	strcpy(root->fileId,"root");
-	root->iden = 1;
-	root->fileSize = 1024*1024;
-	root->fMode = 2;
-
-	//root->setUp = localtime(time(0));
-	FCBList cur = root;//当前目录
-	content[0] = cur;
+	initFile();//系统初始化
+	FCBList cur = content[0];
 	cur->adr = 0;
+
 	
+
 	char command[20];
 	printf("%s>", cur->fileId);
 	scanf("%s", command);
@@ -65,11 +34,15 @@ int main()
 			goto com;
 		}
 		else if (strcmp(command, "delete") == 0)
-			delete(commandFor,cur);
+			delete(commandFor, cur);
 		else if (strcmp(command, "md") == 0)
 			md(cur, commandFor);
 		else if (strcmp(command, "mkdir") == 0)
 			mkdir(cur, commandFor);
+		else if (strcmp(command, "more") == 0)
+			more(commandFor, cur);
+		else if (strcmp(command, "move") == 0)
+			move(commandFor, cur);
 		else if (strcmp(command, "cd") == 0)
 			cur = cd(cur, commandFor);
 		else if (strcmp(command, "find") == 0)
@@ -81,11 +54,17 @@ int main()
 		else if (strcmp(command, "attrib") == 0)
 			attrib(commandFor, cur);
 		else if (strcmp(command, "copy") == 0)
-			copy(cur,commandFor);
+			copy(cur, commandFor);
 		else if (strcmp(command, "rm") == 0)
-			rm(commandFor,cur);
+			rm(commandFor, cur);
 		else if (strcmp(command, "rmdir") == 0)
 			rmdir(commandFor, cur);
+		else if (strcmp(command, "rename") == 0)
+			rename_(commandFor, cur);
+		else if (strcmp(command, "ver") == 0)
+			ver();
+		else if (strcmp(command, "time") == 0)
+			getTime();
 		else
 			printf("查找不到该命令\n\n");
 	com: {
