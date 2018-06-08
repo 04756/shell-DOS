@@ -1,44 +1,30 @@
-
 #include "fileSystem.h"
-//#include "test.h"
-
-int getline(char *s, int lim) {
-	int i;
-	i = 0;
-	char c;
-	while (c = getchar() != EOF && c != '\n'&&i < lim - 1)
-		s[i++] = c;
-	s[i] = '\0';
-	return i;
-}
 
 int main()
 {
 	initFile();//系统初始化
 	FCBList cur = content[0];
 	cur->adr = 0;
-
-	
+	ver();
 
 	char command[20];
-	printf("%s>", cur->fileId);
+	printf("/%s>", cur->fileId);
 	scanf("%s", command);
 	while (strcmp(command, "exit") != 0) {
+		out = 0;
 		char commandFor[50];
-		//getline(commandFor, 20);
-		//scanf("%s", commandFor);
+
 		getchar();
 		gets(commandFor);
-		if (strcmp(command, "dir") == 0) {
-			dir(cur);
-			goto com;
-		}
+		
+		if (strcmp(command, "dir") == 0)
+			dir(cur, commandFor);
 		else if (strcmp(command, "delete") == 0)
 			delete(commandFor, cur);
 		else if (strcmp(command, "md") == 0)
 			md(cur, commandFor);
 		else if (strcmp(command, "mkdir") == 0)
-			mkdir(cur, commandFor);
+			mkdir(cur, commandFor,0);
 		else if (strcmp(command, "more") == 0)
 			more(commandFor, cur);
 		else if (strcmp(command, "move") == 0)
@@ -58,19 +44,27 @@ int main()
 		else if (strcmp(command, "rm") == 0)
 			rm(commandFor, cur);
 		else if (strcmp(command, "rmdir") == 0)
-			rmdir(commandFor, cur);
+			rmdir(commandFor, cur,0);
 		else if (strcmp(command, "rename") == 0)
 			rename_(commandFor, cur);
 		else if (strcmp(command, "ver") == 0)
 			ver();
 		else if (strcmp(command, "time") == 0)
 			getTime();
+		else if (strcmp(command, "import") == 0)
+			import(commandFor, cur);
+		else if (strcmp(command, "export") == 0)
+			export_(commandFor, cur);
+		else if (strcmp(command, "help") == 0)
+			help();
 		else
 			printf("查找不到该命令\n\n");
-	com: {
-		printf("%s>", cur->fileId);
+
+		printf("/root");
+		getRootPathName(cur->fileId);
+		printf("> ");
 		scanf("%s", command); }
-	}
+
 	return 0;
 }
 
